@@ -1,5 +1,6 @@
 $(document).ready(function(){
-	$("#").appand()
+	$( ".nav" ).sortable();
 	
+
 	
 })
