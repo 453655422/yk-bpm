@@ -85,10 +85,10 @@ Option two can be something else and selecting it will deselect option one
     <a href="UserList.jsp" class="btn btn-large btn-primary">返回列表</a>
     </div>
     </div>
-<div class="alert alert-info">
-              <button data-dismiss="alert" class="close" type="button">×</button>
-              <strong>Heads up!</strong> This alert needs your attention, but it's not super important.
-            </div>
+<div class="alert fade in">
+            <button data-dismiss="alert" class="close" type="button">×</button>
+            <strong>Holy guacamole!</strong> Best check yo self, you're not looking too good.
+          </div>
             
   
     <div class="modal" id="myModal" style="display:none;"  tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
