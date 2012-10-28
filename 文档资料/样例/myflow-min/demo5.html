@@ -1,0 +1,344 @@
+﻿
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link type="text/css"
+	href="lib/jquery-ui-1.8.4.custom/css/smoothness/jquery-ui-1.8.4.custom.css"
+	rel="stylesheet" />
+
+<script type="text/javascript" src="lib/excanvas.js"></script>
+<script type="text/javascript" src="lib/ga.js"></script>
+<script type="text/javascript" src="lib/go.js"></script>
+
+<script type="text/javascript"
+	src="lib/jquery-ui-1.8.4.custom/js/jquery-1.4.2.min.js"></script>
+<script type="text/javascript"
+	src="lib/jquery-ui-1.8.4.custom/js/jquery-ui-1.8.4.custom.min.js"></script>
+
+<style type="text/css">
+body {
+	margin: 0;
+	pading: 0;
+	text-align: left;
+	font-family: Arial, sans-serif, Helvetica, Tahoma;
+	font-size: 12px;
+	line-height: 1.5;
+	color: black;
+	background-image: url(img/bg.png);
+}
+
+.node {
+	width: 70px;
+	text-align: center;
+	vertical-align: middle;
+	border: 1px solid #fff;
+}
+
+.mover {
+	border: 1px solid #ddd;
+	background-color: #ddd;
+}
+
+.selected {
+	background-color: #ddd;
+}
+
+.state {
+	
+}
+
+#myflow_props table {
+	
+}
+
+#myflow_props th {
+	letter-spacing: 2px;
+	text-align: left;
+	padding: 6px;
+	background: #ddd;
+}
+
+#myflow_props td {
+	background: #fff;
+	padding: 6px;
+}
+
+#pointer {
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+#path {
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+#task {
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+#state {
+	background-repeat: no-repeat;
+	background-position: center;
+}
+</style>
+</head>
+
+
+
+
+
+<body>
+<div id="sample">
+  <div style="width:100%; white-space:nowrap;">
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:100px">
+      <div id="myPalette" style="background-color: rgb(61, 61, 61); border: 1px solid black; height: 700px; position: relative; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); ">
+	  <canvas style="position: absolute; top: 0px; left: 0px; z-index: 2; " width="98" height="700" tabindex="0">This text is displayed if your browser does not support the Canvas HTML element.</canvas>
+	  <div style="position: absolute; overflow: auto; width: 98px; height: 700px; z-index: 1; ">工具栏
+	  <div style="position: absolute; width: 1px; height: 1px; "></div></div>
+	  <div style="position: absolute; overflow: auto; width: 98px; height: 700px; z-index: 1; ">
+	  <div style="position: absolute; width: 1px; height: 1px; "></div></div></div>
+    </span>
+    <span style="display: inline-block; vertical-align: top; padding: 5px; width:80%">
+      <div id="myDiagram" style=" background-color: rgb(61, 61, 61); border: 1px solid black; height: 700px; position: relative; -webkit-tap-highlight-color: rgba(255, 255, 255, 0); "><canvas style="position: absolute; top: 0px; left: 0px; z-index: 2; " width="952" height="700" tabindex="0">This text is displayed if your browser does not support the Canvas HTML element.</canvas><div style="position: absolute; overflow: auto; width: 952px; height: 700px; z-index: 1; "><div style="position: absolute; width: 1px; height: 1px; "></div></div><div style="position: absolute; overflow: auto; width: 952px; height: 700px; z-index: 1; "><div style="position: absolute; width: 1px; height: 1px; "></div></div></div>
+    </span>
+  </div>
+</div>
+</body>
+</html>
+
+
+<script type="text/javascript">
+  (function(a) {
+    if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
+  
+
+    myDiagram = new go.Diagram("myDiagram");  // must name or refer to the DIV HTML element
+
+    // define several shared Brushes
+    var graygrad = new go.Brush(go.Brush.Linear);
+    graygrad.addColorStop(0, "rgb(150, 150, 150)");
+    graygrad.addColorStop(0.5, "rgb(86, 86, 86)");
+    graygrad.addColorStop(1, "rgb(86, 86, 86)");
+
+    var greengrad = new go.Brush(go.Brush.Linear);
+    greengrad.addColorStop(0, "rgb(98, 149, 79)");
+    greengrad.addColorStop(1, "rgb(17, 51, 6)");
+
+    var redgrad = new go.Brush(go.Brush.Linear);
+    redgrad.addColorStop(0, "rgb(156, 56, 50)");
+    redgrad.addColorStop(1, "rgb(82, 6, 0)");
+
+    var yellowgrad = new go.Brush(go.Brush.Linear);
+    yellowgrad.addColorStop(0, "rgb(254, 201, 0)");
+    yellowgrad.addColorStop(1, "rgb(254, 162, 0)");
+
+    // Don't show shadows on mobile devices for performance reasons
+    var shadows = !('ontouchstart' in window);
+
+    // define the Node template for regular nodes
+    myDiagram.nodeTemplateMap.add("",  // the default category
+      a(go.Node, go.Panel.Spot,
+        // the Node.location is at the center of each node
+        { locationSpot: go.Spot.Center, isShadowed: shadows, shadowColor: '#242424' },
+        // The Node.location comes from the "loc" property of the node data,
+        // converted by the Point.parse method.
+        // If the Node.location is changed, it updates the "loc" property of the node data,
+        // converting back using the Point.stringify method.
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        // handle mouse enter/leave events to show/hide the ports
+        { mouseEnter: function(e, obj) { showPorts(obj.part, true); },
+          mouseLeave: function(e, obj) { showPorts(obj.part, false); } },
+        // the main object is a Panel that surrounds a TextBlock with a rectangular Shape
+        a(go.Panel, go.Panel.Auto,
+          a(go.Shape,
+            { figure: "Rectangle", fill: graygrad },
+            new go.Binding("figure", "figure")),
+          a(go.TextBlock,
+            { font: "bold 9pt Helvetica, Arial, sans-serif",
+              stroke: "white",
+              margin: 8,
+              maxSize: new go.Size(100, NaN),
+              wrap: go.TextBlock.WrapFit,
+              editable: true },
+            new go.Binding("text", "text").makeTwoWay())),
+        // four named ports, one on each side:
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Top, alignmentFocus: go.Spot.Top,
+            portId: "T", fromSpot: go.Spot.Top, toSpot: go.Spot.Top,
+            fromLinkable: false, toLinkable: true, cursor: "pointer" }),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Left, alignmentFocus: go.Spot.Left,
+            portId: "L", fromSpot: go.Spot.Left, toSpot: go.Spot.Left,
+            fromLinkable: true, toLinkable: true, cursor: "pointer" }),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
+            portId: "R", fromSpot: go.Spot.Right, toSpot: go.Spot.Right,
+            fromLinkable: true, toLinkable: true, cursor: "pointer" }),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Bottom, alignmentFocus: go.Spot.Bottom,
+            portId: "B", fromSpot: go.Spot.Bottom, toSpot: go.Spot.Bottom,
+            fromLinkable: true, toLinkable: false, cursor: "pointer" })
+        ));
+
+    myDiagram.nodeTemplateMap.add("Start",
+      a(go.Node, go.Panel.Spot,
+        { locationSpot: go.Spot.Center, isShadowed: shadows, shadowColor: '#242424' },
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        { mouseEnter: function(e, obj) { showPorts(obj.part, true); },
+          mouseLeave: function(e, obj) { showPorts(obj.part, false); } },
+        a(go.Panel, go.Panel.Auto,
+          a(go.Shape,
+            { figure: "Ellipse", fill: greengrad, stroke: 'rgb(17, 51, 6)' }),
+          a(go.TextBlock,
+            { text: "Start", margin: 5,
+              font: "bold 9pt Helvetica, Arial, sans-serif",
+              stroke: 'rgb(190, 247, 112)' })),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Left, alignmentFocus: go.Spot.Left,
+            portId: "L", fromSpot: go.Spot.Left, toSpot: go.Spot.Left,
+            fromLinkable: true, toLinkable: false, cursor: "pointer" }),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
+            portId: "R", fromSpot: go.Spot.Right, toSpot: go.Spot.Right,
+            fromLinkable: true, toLinkable: false, cursor: "pointer" }),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Bottom, alignmentFocus: go.Spot.Bottom,
+            portId: "B", fromSpot: go.Spot.Bottom, toSpot: go.Spot.Bottom,
+            fromLinkable: true, toLinkable: false, cursor: "pointer" })
+        ));
+
+    myDiagram.nodeTemplateMap.add("End",
+      a(go.Node, go.Panel.Spot,
+        { locationSpot: go.Spot.Center, isShadowed: shadows, shadowColor: '#242424' },
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        { mouseEnter: function(e, obj) { showPorts(obj.part, true); },
+          mouseLeave: function(e, obj) { showPorts(obj.part, false); } },
+        a(go.Panel, go.Panel.Auto,
+          a(go.Shape,
+            { figure: "Ellipse", fill: redgrad, stroke: 'rgb(82, 6, 0)' }),
+          a(go.TextBlock,
+            { text: "End", margin: 5,
+              font: "bold 9pt Helvetica, Arial, sans-serif",
+              stroke: 'rgb(255, 207, 169)' })),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Top, alignmentFocus: go.Spot.Top,
+            portId: "T", fromSpot: go.Spot.Top, toSpot: go.Spot.Top,
+            fromLinkable: false, toLinkable: true, cursor: "pointer" }),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Left, alignmentFocus: go.Spot.Left,
+            portId: "L", fromSpot: go.Spot.Left, toSpot: go.Spot.Left,
+            fromLinkable: false, toLinkable: true, cursor: "pointer" }),
+        a(go.Shape,
+          { figure: "Ellipse", fill: "transparent", stroke: null,
+            desiredSize: new go.Size(6, 6),
+            alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
+            portId: "R", fromSpot: go.Spot.Right, toSpot: go.Spot.Right,
+            fromLinkable: false, toLinkable: true, cursor: "pointer" })
+        ));
+
+    myDiagram.nodeTemplateMap.add("Comment",
+      a(go.Node, go.Panel.Auto,
+        { locationSpot: go.Spot.Center, isShadowed: shadows, shadowColor: '#242424' },
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        a(go.Shape,
+          { figure: "Ellipse", fill: yellowgrad },
+          new go.Binding("figure", "figure")),
+        a(go.TextBlock,
+          { margin: 5,
+            maxSize: new go.Size(200, NaN),
+            wrap: go.TextBlock.WrapFit,
+            textAlign: "center",
+            editable: true,
+            font: "bold 9pt Helvetica, Arial, sans-serif" },
+          new go.Binding("text", "text").makeTwoWay())));
+
+    // replace the default Link template in the linkTemplateMap
+    myDiagram.linkTemplate =
+      a(go.Link,  // the whole link panel
+        { routing: go.Link.AvoidsNodes,
+          curve: go.Link.JumpOver,
+          corner: 5, toShortLength: 4,
+          relinkableFrom: true, relinkableTo: true, reshapable:true },
+        a(go.Shape,  // the link path shape
+          { isPanelMain: true,
+            stroke: "whitesmoke", strokeWidth: 2 }),
+        a(go.Shape,  // the arrowhead
+          { toArrow: "standard",
+            stroke: null, fill: "whitesmoke" }),
+        a(go.Panel, go.Panel.Auto,
+          { visible: false, name: "LABEL", segmentIndex: 2, segmentFraction: 0.5},
+          new go.Binding("visible", "visible").makeTwoWay(),
+          a(go.Shape,  // the link shape
+            { figure: 'RoundedRectangle', fill: "#F8F8F8", stroke: null }),
+          a(go.TextBlock,  // the label
+            { textAlign: "center",
+              font: "10pt helvetica, arial, sans-serif",
+              stroke: "#919191",
+              margin: 2, text: "Yes", editable: true }
+            )
+          )
+        );
+
+    // make link labels visible if coming out of a "conditional" node
+    myDiagram.addDiagramListener('LinkDrawn', function(e) {
+      if (e.subject.fromNode.data.figure === 'Diamond') {
+        var label = e.subject.findObject('LABEL');
+        if (label !== null) label.visible = true;
+      }
+    })
+
+    myDiagram.allowDrop = true;  // must be true to accept drops from the Palette
+    // temporary links used by LinkingTool and RelinkingTool are also orthogonal:
+    myDiagram.toolManager.linkingTool.temporaryLink.routing = go.Link.Orthogonal;
+    myDiagram.toolManager.relinkingTool.temporaryLink.routing = go.Link.Orthogonal;
+
+  // load an initial diagram from some JSON text
+
+    // initialize the Palette that is on the left side of the page
+    myPalette = new go.Palette("myPalette");  // must name or refer to the DIV HTML element
+    myPalette.nodeTemplateMap = myDiagram.nodeTemplateMap;
+    myPalette.model = new go.GraphLinksModel([
+      { category: "Start", text: "Start" },
+      { text: "Step" },
+      { text: "???", figure: "Diamond" },
+      { category: "End", text: "End" },
+	  { category: "Comment", text: "static" },
+      { category: "Comment", text: "Comment", figure: "RoundedRectangle" }
+    ]);
+  })(go.GraphObject.make);
+
+  // Make all ports on a node visible when the mouse is over the node
+    function showPorts(node, show) {
+    var diagram = node.diagram;
+    if (!diagram || diagram.isReadOnly || !diagram.allowLink) return;
+    var it = node.ports;
+    while (it.next()) {
+      var port = it.value;
+      port.stroke = (show ? "white" : null);
+    }
+  }
+
+ 
+</script>
